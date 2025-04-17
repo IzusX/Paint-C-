@@ -1,0 +1,16 @@
+C:\Programming\C#\pomogite\DrawingEditor\DrawingEditor\bin\Debug\net9.0-windows\DrawingEditor.exe
+C:\Programming\C#\pomogite\DrawingEditor\DrawingEditor\bin\Debug\net9.0-windows\DrawingEditor.deps.json
+C:\Programming\C#\pomogite\DrawingEditor\DrawingEditor\bin\Debug\net9.0-windows\DrawingEditor.runtimeconfig.json
+C:\Programming\C#\pomogite\DrawingEditor\DrawingEditor\bin\Debug\net9.0-windows\DrawingEditor.dll
+C:\Programming\C#\pomogite\DrawingEditor\DrawingEditor\bin\Debug\net9.0-windows\DrawingEditor.pdb
+C:\Programming\C#\pomogite\DrawingEditor\DrawingEditor\obj\Debug\net9.0-windows\DrawingEditor.Form1.resources
+C:\Programming\C#\pomogite\DrawingEditor\DrawingEditor\obj\Debug\net9.0-windows\DrawingEditor.csproj.GenerateResource.cache
+C:\Programming\C#\pomogite\DrawingEditor\DrawingEditor\obj\Debug\net9.0-windows\DrawingEditor.GeneratedMSBuildEditorConfig.editorconfig
+C:\Programming\C#\pomogite\DrawingEditor\DrawingEditor\obj\Debug\net9.0-windows\DrawingEditor.AssemblyInfoInputs.cache
+C:\Programming\C#\pomogite\DrawingEditor\DrawingEditor\obj\Debug\net9.0-windows\DrawingEditor.AssemblyInfo.cs
+C:\Programming\C#\pomogite\DrawingEditor\DrawingEditor\obj\Debug\net9.0-windows\DrawingEditor.csproj.CoreCompileInputs.cache
+C:\Programming\C#\pomogite\DrawingEditor\DrawingEditor\obj\Debug\net9.0-windows\DrawingEditor.dll
+C:\Programming\C#\pomogite\DrawingEditor\DrawingEditor\obj\Debug\net9.0-windows\refint\DrawingEditor.dll
+C:\Programming\C#\pomogite\DrawingEditor\DrawingEditor\obj\Debug\net9.0-windows\DrawingEditor.pdb
+C:\Programming\C#\pomogite\DrawingEditor\DrawingEditor\obj\Debug\net9.0-windows\DrawingEditor.genruntimeconfig.cache
+C:\Programming\C#\pomogite\DrawingEditor\DrawingEditor\obj\Debug\net9.0-windows\ref\DrawingEditor.dll
