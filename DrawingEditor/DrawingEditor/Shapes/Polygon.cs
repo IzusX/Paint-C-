@@ -217,15 +217,57 @@ namespace DrawingEditor.Shapes
         public void Scale(float sx, float sy)
         {
             if (points.Count != sides || points.Any(p => p.IsEmpty)) return;
-            Point center = new Point((int)points.Average(p => p.X), (int)points.Average(p => p.Y));
+
+            const int minSize = 2;
+            List<Point> originalPoints = points.Select(p => new Point(p.X, p.Y)).ToList();
+            System.Drawing.Rectangle initialBounds = GetBoundingBox();
+            
+            Point center = new Point((int)originalPoints.Average(p => p.X), (int)originalPoints.Average(p => p.Y));
+            
             for (int i = 0; i < points.Count; i++)
             {
                 points[i] = new Point(
-                    center.X + (int)((points[i].X - center.X) * sx),
-                    center.Y + (int)((points[i].Y - center.Y) * sy)
+                    center.X + (int)((originalPoints[i].X - center.X) * sx),
+                    center.Y + (int)((originalPoints[i].Y - center.Y) * sy)
                 );
             }
-            // Аналогично Rotate, нужно подумать про interactionCenter и interactionRadius при масштабировании
+
+            System.Drawing.Rectangle newBounds = GetBoundingBox();
+
+            bool tryingToShrink = sx < 1.0f || sy < 1.0f;
+            bool becameTooSmallWidth = (newBounds.Width < minSize && initialBounds.Width >= minSize);
+            bool becameTooSmallHeight = (newBounds.Height < minSize && initialBounds.Height >= minSize);
+            bool collapsed = newBounds.IsEmpty && !initialBounds.IsEmpty;
+
+            if ((tryingToShrink && (becameTooSmallWidth || becameTooSmallHeight)) || collapsed)
+            {
+                for (int i = 0; i < originalPoints.Count; i++)
+                {
+                    points[i] = originalPoints[i];
+                }
+            }
+        }
+
+        public override System.Drawing.Rectangle GetBoundingBox()
+        {
+            // Используем актуальные вершины для bounding box
+            List<Point> currentVertices = points;
+            if (interactionCenter != null && IsDrawing && interactionRadius > 0)
+            {
+                 currentVertices = CalculateVertices(interactionCenter.Value, interactionRadius);
+            }
+            else if (interactionCenter != null && points.Count > 0 && points.All(pt => pt.IsEmpty))
+            {
+                 currentVertices = CalculateVertices(interactionCenter.Value, 5); // радиус по умолчанию
+            }
+
+            if (currentVertices.Count == 0 || currentVertices.Any(p => p.IsEmpty)) return System.Drawing.Rectangle.Empty;
+
+            int minX = currentVertices.Min(p => p.X);
+            int minY = currentVertices.Min(p => p.Y);
+            int maxX = currentVertices.Max(p => p.X);
+            int maxY = currentVertices.Max(p => p.Y);
+            return System.Drawing.Rectangle.FromLTRB(minX, minY, maxX, maxY);
         }
     }
 }

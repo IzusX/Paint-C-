@@ -73,18 +73,49 @@ namespace DrawingEditor.Shapes
         {
             if (points.Count < 2) return;
 
+            const int minSize = 2;
+            List<Point> originalPoints = points.Select(p => new Point(p.X, p.Y)).ToList();
+            System.Drawing.Rectangle initialBounds = GetBoundingBox(); 
+
             Point center = new Point(
-                (int)points.Average(p => (double)p.X),
-                (int)points.Average(p => (double)p.Y)
+                (int)originalPoints.Average(p => p.X),
+                (int)originalPoints.Average(p => p.Y)
             );
 
             for (int i = 0; i < points.Count; i++)
             {
                 points[i] = new Point(
-                    center.X + (int)((points[i].X - center.X) * sx),
-                    center.Y + (int)((points[i].Y - center.Y) * sy)
+                    center.X + (int)((originalPoints[i].X - center.X) * sx),
+                    center.Y + (int)((originalPoints[i].Y - center.Y) * sy)
                 );
             }
+
+            System.Drawing.Rectangle newBounds = GetBoundingBox();
+
+            bool tryingToShrink = sx < 1.0f || sy < 1.0f;
+            // Откат, если пытались уменьшить и один из размеров стал меньше minSize (а был больше или равен),
+            // или если фигура схлопнулась (стала пустой, а была непустой)
+            bool becameTooSmallWidth = (newBounds.Width < minSize && initialBounds.Width >= minSize);
+            bool becameTooSmallHeight = (newBounds.Height < minSize && initialBounds.Height >= minSize);
+            bool collapsed = newBounds.IsEmpty && !initialBounds.IsEmpty;
+
+            if ((tryingToShrink && (becameTooSmallWidth || becameTooSmallHeight)) || collapsed)
+            {
+                for (int i = 0; i < originalPoints.Count; i++)
+                {
+                    points[i] = originalPoints[i];
+                }
+            }
+        }
+
+        public override System.Drawing.Rectangle GetBoundingBox()
+        {
+            if (points.Count == 0) return System.Drawing.Rectangle.Empty;
+            int minX = points.Min(p => p.X);
+            int minY = points.Min(p => p.Y);
+            int maxX = points.Max(p => p.X);
+            int maxY = points.Max(p => p.Y);
+            return System.Drawing.Rectangle.FromLTRB(minX, minY, maxX, maxY);
         }
     }
 }

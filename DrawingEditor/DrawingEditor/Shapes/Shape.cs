@@ -66,6 +66,9 @@ namespace DrawingEditor.Shapes
         public abstract bool Contains(Point p);
         public abstract void Move(int dx, int dy);
 
+        // Абстрактный метод для получения ограничивающего прямоугольника
+        public abstract System.Drawing.Rectangle GetBoundingBox();
+
         public virtual void UpdatePoint(int index, Point newLocation)
         {
             if (index >= 0 && index < points.Count)

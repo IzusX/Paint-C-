@@ -165,18 +165,83 @@ namespace DrawingEditor.Shapes
 
         public void Scale(float sx, float sy)
         {
-            Point center = new Point(
-                (int)points.Average(p => (double)p.X),
-                (int)points.Average(p => (double)p.Y)
+            if (points.Count < 2) return;
+
+            const int minSize = 2;
+            Point originalStartPoint = points[0];
+            Point originalEndPoint = points[1];
+            System.Drawing.Rectangle initialBounds = GetBoundingBox();
+            // rotationAngle не меняется при масштабировании
+
+            int currentCenterX = (points[0].X + points[1].X) / 2;
+            int currentCenterY = (points[0].Y + points[1].Y) / 2;
+
+            points[0] = new Point(
+                currentCenterX + (int)((originalStartPoint.X - currentCenterX) * sx),
+                currentCenterY + (int)((originalStartPoint.Y - currentCenterY) * sy)
+            );
+            points[1] = new Point(
+                currentCenterX + (int)((originalEndPoint.X - currentCenterX) * sx),
+                currentCenterY + (int)((originalEndPoint.Y - currentCenterY) * sy)
             );
 
-            for (int i = 0; i < points.Count; i++)
+            System.Drawing.Rectangle newBounds = GetBoundingBox();
+
+            bool tryingToShrink = sx < 1.0f || sy < 1.0f;
+            bool becameTooSmallWidth = (newBounds.Width < minSize && initialBounds.Width >= minSize);
+            bool becameTooSmallHeight = (newBounds.Height < minSize && initialBounds.Height >= minSize);
+            // Для эллипса, points[0] и points[1] могут совпасть, что GetBoundingBox вернет как Empty, но это валидное состояние (очень маленький эллипс)
+            // Поэтому collapsed проверяем чуть иначе или больше полагаемся на becameTooSmall
+            bool collapsed = newBounds.IsEmpty && !initialBounds.IsEmpty && (Math.Abs(originalStartPoint.X - originalEndPoint.X) > 0 || Math.Abs(originalStartPoint.Y - originalEndPoint.Y) > 0) ;
+
+            if ((tryingToShrink && (becameTooSmallWidth || becameTooSmallHeight)) || collapsed)
             {
-                points[i] = new Point(
-                    center.X + (int)((points[i].X - center.X) * sx),
-                    center.Y + (int)((points[i].Y - center.Y) * sy)
-                );
+                points[0] = originalStartPoint;
+                points[1] = originalEndPoint;
             }
+        }
+
+        public override System.Drawing.Rectangle GetBoundingBox()
+        {
+            if (points.Count < 2) return System.Drawing.Rectangle.Empty;
+
+            // Необходимо вычислить реальные точки контура с учетом поворота
+            var currentStartPoint = points[0];
+            var currentEndPoint = points[1];
+
+            int centerX = (currentStartPoint.X + currentEndPoint.X) / 2;
+            int centerY = (currentStartPoint.Y + currentEndPoint.Y) / 2;
+            int radiusX = Math.Abs(currentEndPoint.X - currentStartPoint.X) / 2;
+            int radiusY = Math.Abs(currentEndPoint.Y - currentStartPoint.Y) / 2;
+
+            if (radiusX == 0 && radiusY == 0) return new System.Drawing.Rectangle(centerX, centerY, 0, 0);
+
+            List<Point> ellipseContour = new List<Point>();
+            int steps = (int)(Math.PI * (radiusX + radiusY)); // Упрощенное количество шагов
+            if (steps < 60) steps = 60;
+            double angleRad = rotationAngle * Math.PI / 180.0;
+            
+            for (int i = 0; i <= steps; i++)
+            {
+                double t = 2 * Math.PI * i / steps;
+                double x0 = radiusX * Math.Cos(t);
+                double y0 = radiusY * Math.Sin(t);
+                
+                double xr = x0 * Math.Cos(angleRad) - y0 * Math.Sin(angleRad);
+                double yr = x0 * Math.Sin(angleRad) + y0 * Math.Cos(angleRad);
+                
+                int x = (int)Math.Round(centerX + xr);
+                int y = (int)Math.Round(centerY + yr);
+                ellipseContour.Add(new Point(x, y));
+            }
+            
+            if (ellipseContour.Count == 0) return System.Drawing.Rectangle.Empty; // На случай если что-то пошло не так
+
+            int minX = ellipseContour.Min(p => p.X);
+            int minY = ellipseContour.Min(p => p.Y);
+            int maxX = ellipseContour.Max(p => p.X);
+            int maxY = ellipseContour.Max(p => p.Y);
+            return System.Drawing.Rectangle.FromLTRB(minX, minY, maxX, maxY);
         }
     }
 }

@@ -156,20 +156,61 @@ namespace DrawingEditor.Shapes
 
         public void Scale(float sx, float sy)
         {
-            if (points.Count == 0) return;
+            if (points.Count == 0 || points.All(p => p.IsEmpty && points.Count > 1)) return; // если только пустая точка или вообще пусто
+            
+            var relevantOriginalPointsForCenter = points.Where((p, index) => !(index == 0 && p.IsEmpty && points.Count > 1)).ToList();
+            if(relevantOriginalPointsForCenter.Count == 0) return;
+
+            const int minSize = 2;
+            List<Point> originalPointsFull = points.Select(p => new Point(p.X, p.Y)).ToList();
+            System.Drawing.Rectangle initialBounds = GetBoundingBox();
 
             Point center = new Point(
-                (int)points.Average(p => p.X),
-                (int)points.Average(p => p.Y)
+                (int)relevantOriginalPointsForCenter.Average(p => p.X),
+                (int)relevantOriginalPointsForCenter.Average(p => p.Y)
             );
 
             for (int i = 0; i < points.Count; i++)
             {
+                if (points[i].IsEmpty && i == 0 && points.Count > 1) continue; 
+                
                 points[i] = new Point(
-                    center.X + (int)((points[i].X - center.X) * sx),
-                    center.Y + (int)((points[i].Y - center.Y) * sy)
+                    center.X + (int)((originalPointsFull[i].X - center.X) * sx),
+                    center.Y + (int)((originalPointsFull[i].Y - center.Y) * sy)
                 );
             }
+
+            System.Drawing.Rectangle newBounds = GetBoundingBox();
+            
+            bool tryingToShrink = sx < 1.0f || sy < 1.0f;
+            bool becameTooSmallWidth = (newBounds.Width < minSize && initialBounds.Width >= minSize);
+            bool becameTooSmallHeight = (newBounds.Height < minSize && initialBounds.Height >= minSize);
+            bool collapsed = newBounds.IsEmpty && !initialBounds.IsEmpty;
+
+            if ((tryingToShrink && (becameTooSmallWidth || becameTooSmallHeight)) || collapsed)
+            {
+                for (int i = 0; i < originalPointsFull.Count; i++)
+                {
+                    points[i] = originalPointsFull[i];
+                }
+            }
+        }
+
+        public override System.Drawing.Rectangle GetBoundingBox()
+        {
+            // Для кривой Безье проходим по всем точкам (опорным и контрольным)
+            // для более точного bounding box нужно было бы сэмплировать точки на самой кривой.
+            if (points.Count == 0 || points.All(p => p.IsEmpty)) return System.Drawing.Rectangle.Empty;
+            
+            // Игнорируем первую пустую точку, если она есть
+            var relevantPoints = points.Where((p, index) => !(index == 0 && p.IsEmpty && points.Count > 1)).ToList();
+            if (relevantPoints.Count == 0) return System.Drawing.Rectangle.Empty;
+
+            int minX = relevantPoints.Min(p => p.X);
+            int minY = relevantPoints.Min(p => p.Y);
+            int maxX = relevantPoints.Max(p => p.X);
+            int maxY = relevantPoints.Max(p => p.Y);
+            return System.Drawing.Rectangle.FromLTRB(minX, minY, maxX, maxY);
         }
     }
 }
