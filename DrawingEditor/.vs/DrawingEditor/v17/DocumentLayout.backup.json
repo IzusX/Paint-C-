@@ -3,12 +3,12 @@
   "WorkspaceRootPath": "C:\\Programming\\C#\\pomogite\\DrawingEditor\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{DF5229EA-9B54-461E-B193-B11C29F6B703}|DrawingEditor\\DrawingEditor.csproj|c:\\programming\\c#\\pomogite\\drawingeditor\\drawingeditor\\shapes\\rectangleshape.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{DF5229EA-9B54-461E-B193-B11C29F6B703}|DrawingEditor\\DrawingEditor.csproj|solutionrelative:drawingeditor\\shapes\\rectangleshape.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{DF5229EA-9B54-461E-B193-B11C29F6B703}|DrawingEditor\\DrawingEditor.csproj|c:\\programming\\c#\\pomogite\\drawingeditor\\drawingeditor\\shapes\\ellipse.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{DF5229EA-9B54-461E-B193-B11C29F6B703}|DrawingEditor\\DrawingEditor.csproj|solutionrelative:drawingeditor\\shapes\\ellipse.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DF5229EA-9B54-461E-B193-B11C29F6B703}|DrawingEditor\\DrawingEditor.csproj|c:\\programming\\c#\\pomogite\\drawingeditor\\drawingeditor\\shapes\\rectangleshape.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DF5229EA-9B54-461E-B193-B11C29F6B703}|DrawingEditor\\DrawingEditor.csproj|solutionrelative:drawingeditor\\shapes\\rectangleshape.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{DF5229EA-9B54-461E-B193-B11C29F6B703}|DrawingEditor\\DrawingEditor.csproj|c:\\programming\\c#\\pomogite\\drawingeditor\\drawingeditor\\shapes\\shape.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -54,11 +54,11 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 5,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 1,
               "Title": "RectangleShape.cs",
               "DocumentMoniker": "C:\\Programming\\C#\\pomogite\\DrawingEditor\\DrawingEditor\\Shapes\\RectangleShape.cs",
               "RelativeDocumentMoniker": "DrawingEditor\\Shapes\\RectangleShape.cs",
@@ -66,8 +66,7 @@
               "RelativeToolTip": "DrawingEditor\\Shapes\\RectangleShape.cs",
               "ViewState": "AgIAAB4AAAAAAAAAAAAUwCAAAABDAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-16T14:17:08.424Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-04-16T14:17:08.424Z"
             },
             {
               "$type": "Document",
@@ -119,7 +118,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 0,
               "Title": "Ellipse.cs",
               "DocumentMoniker": "C:\\Programming\\C#\\pomogite\\DrawingEditor\\DrawingEditor\\Shapes\\Ellipse.cs",
               "RelativeDocumentMoniker": "DrawingEditor\\Shapes\\Ellipse.cs",

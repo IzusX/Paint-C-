@@ -278,63 +278,45 @@ namespace DrawingEditor
                 switch (currentMode)
                 {
                     case EditMode.Draw:
-                        isDrawing = true; // Ставим isDrawing в true для всех фигур в режиме Draw
-                        CreateShape();
-                        currentShape.IsDrawing = true; // Устанавливаем и для текущей фигуры
-
                         if (currentTool == ToolType.Polyline)
                         {
-                            // Логика для Polyline остается почти такой же
-                            if (!(currentShape is Polyline) || !((Polyline)currentShape).IsDrawingPolyline) // Проверяем, не рисуется ли уже
+                            if (currentShape == null || !(currentShape is Polyline) || !((Polyline)currentShape).IsDrawingPolyline)
                             {
-                                // Начинаем новую ломаную, если это первый клик для нее
-                                currentShape.AddPoint(e.Location); // Первая точка
+                                // Начинаем новую ломаную
+                                CreateShape(); // currentTool здесь будет Polyline
+                                isDrawing = true;
+                                currentShape.IsDrawing = true;
                                 ((Polyline)currentShape).IsDrawingPolyline = true;
+                                currentShape.AddPoint(e.Location); // Первая точка
                             }
                             else
                             {
+                                // Продолжаем рисовать существующую ломаную
                                 currentShape.AddPoint(e.Location); // Добавляем новую точку
                             }
                         }
-                        else if (currentTool == ToolType.BezierCurve)
+                        else
                         {
-                            if (!isBezierDrawing)
+                            // Для всех остальных фигур - стандартное поведение
+                            isDrawing = true; 
+                            CreateShape();
+                            currentShape.IsDrawing = true; 
+
+                            if (currentTool == ToolType.BezierCurve)
                             {
-                                // Начинаем новую кривую Безье
-                                isBezierDrawing = true;
-                                CreateShape();
-                                currentShape.IsDrawing = true;
-                                // Добавляем точки в правильном порядке:
-                                //currentShape.AddPoint(Point.Empty); // Пустая точка для индексации с 1
-                                currentShape.AddPoint(e.Location); // Первая опорная точка (i=1)
-                                currentShape.AddPoint(e.Location); // Первая контрольная точка
-                                currentShape.AddPoint(e.Location); // Вторая контрольная точка
-                                //currentShape.AddPoint(e.Location); // Конечная точка
+                                // ... (логика для BezierCurve, если она отличается)
+                            }
+                            else if (currentTool == ToolType.Polygon)
+                            {
+                                currentShape.AddPoint(e.Location); // Первая точка - центр для полигона
                             }
                             else
                             {
-                                // Добавляем новый сегмент, начиная с опорной точки
-                                currentShape.AddPoint(e.Location); // Новая опорная точка
-                                currentShape.AddPoint(e.Location); // Новая контрольная точка 1
-                                currentShape.AddPoint(e.Location); // Новая контрольная точка 2
-                                //currentShape.AddPoint(e.Location); // Новая конечная точка
+                                // Line, RectangleShape, Ellipse
+                                startPoint = e.Location;
+                                currentShape.AddPoint(startPoint);
+                                currentShape.AddPoint(startPoint); 
                             }
-                        }
-                        else if (currentTool == ToolType.Polygon)
-                        {
-                            currentShape.AddPoint(e.Location); // Первая точка - центр
-                            // Добавляем "пустышку" для второй точки, чтобы UpdatePoint работал
-                            // Эта точка будет обновляться в MouseMove
-                            // currentShape.AddPoint(e.Location); 
-                            // Вместо добавления второй точки здесь, она будет определяться в MouseMove
-                            // и использоваться для UpdatePoint
-                        }
-                        else
-                        {
-                            // Обычное рисование для других фигур (Line, RectangleShape, Ellipse)
-                            startPoint = e.Location;
-                            currentShape.AddPoint(startPoint);
-                            currentShape.AddPoint(startPoint); // Добавляем вторую точку для UpdatePoint
                         }
                         Refresh();
                         break;
@@ -369,6 +351,19 @@ namespace DrawingEditor
                     polyline.IsDrawingPolyline = false; // Завершаем рисование ломаной
                     if (currentShape.Points.Count >= 2) 
                     {
+                        // Проверяем и примагничиваем последнюю точку к первой, если они близки
+                        if (currentShape.Points.Count > 1) // Нужно хотя бы 2 точки для замыкания
+                        {
+                            Point firstPoint = currentShape.Points[0];
+                            Point lastPoint = currentShape.Points[currentShape.Points.Count - 1];
+                            double distance = Math.Sqrt(Math.Pow(lastPoint.X - firstPoint.X, 2) + Math.Pow(lastPoint.Y - firstPoint.Y, 2));
+                            const int closingThreshold = 10; // Порог для автоматического замыкания
+
+                            if (distance <= closingThreshold && distance != 0) // !=0 чтобы не замыкать если это всего одна точка
+                            {
+                                currentShape.UpdatePoint(currentShape.Points.Count - 1, firstPoint);
+                            }
+                        }
                         shapes.Add(currentShape);
                     }
                     currentShape = null;
