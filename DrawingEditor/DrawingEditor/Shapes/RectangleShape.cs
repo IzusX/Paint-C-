@@ -16,42 +16,104 @@ namespace DrawingEditor.Shapes
             strokeWidth = 1;
         }
 
+        public override void AddPoint(Point p)
+        {
+            if (points.Count == 0)
+            {
+                points.Add(p);
+            }
+            else if (points.Count == 1)
+            {
+                // При добавлении второй точки вычисляем все четыре угла по часовой стрелке
+                Point p1 = points[0];
+                Point p2 = p;
+                points.Clear();
+                points.Add(new Point(p1.X, p1.Y)); // левый верхний
+                points.Add(new Point(p2.X, p1.Y)); // правый верхний
+                points.Add(new Point(p2.X, p2.Y)); // правый нижний
+                points.Add(new Point(p1.X, p2.Y)); // левый нижний
+            }
+            else
+            {
+                // При интерактивном изменении второй точки пересчитываем все четыре угла
+                Point p1 = points[0];
+                Point p2 = p;
+                points[0] = new Point(p1.X, p1.Y); // левый верхний
+                points[1] = new Point(p2.X, p1.Y); // правый верхний
+                points[2] = new Point(p2.X, p2.Y); // правый нижний
+                points[3] = new Point(p1.X, p2.Y); // левый нижний
+            }
+        }
+
+        public override void UpdatePoint(int index, Point p)
+        {
+            if (points.Count == 4)
+            {
+                // Для прямоугольника UpdatePoint всегда пересчитывает все четыре угла
+                Point p1 = points[0];
+                Point p2 = p;
+                points[0] = new Point(p1.X, p1.Y); // левый верхний
+                points[1] = new Point(p2.X, p1.Y); // правый верхний
+                points[2] = new Point(p2.X, p2.Y); // правый нижний
+                points[3] = new Point(p1.X, p2.Y); // левый нижний
+            }
+        }
+
         public override void Draw(Graphics g)
         {
-            if (points.Count < 2) return;
-            
-            // Добавим реализацию метода Draw
-            int x = Math.Min(points[0].X, points[1].X);
-            int y = Math.Min(points[0].Y, points[1].Y);
-            int width = Math.Abs(points[1].X - points[0].X);
-            int height = Math.Abs(points[1].Y - points[0].Y);
-
-            // Рисуем контур
-            using (Pen pen = new Pen(strokeColor, strokeWidth))
+            if (points.Count < 4) return;
+            // Рисуем стороны прямоугольника вручную
+            for (int i = 0; i < 4; i++)
             {
-                g.DrawRectangle(pen, x, y, width, height);
+                DrawLineBresenham(g, points[i], points[(i + 1) % 4], strokeColor, strokeWidth);
             }
-
-            // Если есть заливка
+            // Ручная заливка (простая построчная)
             if (fillColor != Color.Transparent)
             {
-                using (Brush brush = new SolidBrush(fillColor))
+                // Найдём границы
+                int minY = points.Min(p => p.Y);
+                int maxY = points.Max(p => p.Y);
+                for (int y = minY; y <= maxY; y++)
                 {
-                    g.FillRectangle(brush, x, y, width, height);
+                    // Найти пересечения горизонтали y с рёбрами
+                    List<int> xIntersections = new List<int>();
+                    for (int i = 0; i < 4; i++)
+                    {
+                        Point p1 = points[i];
+                        Point p2 = points[(i + 1) % 4];
+                        if ((p1.Y <= y && p2.Y > y) || (p2.Y <= y && p1.Y > y))
+                        {
+                            // Линейная интерполяция X
+                            int x = p1.X + (int)((float)(y - p1.Y) / (p2.Y - p1.Y) * (p2.X - p1.X));
+                            xIntersections.Add(x);
+                        }
+                    }
+                    xIntersections.Sort();
+                    // Заливаем между парами пересечений
+                    for (int i = 0; i + 1 < xIntersections.Count; i += 2)
+                    {
+                        for (int x = xIntersections[i]; x <= xIntersections[i + 1]; x++)
+                        {
+                            g.FillRectangle(new SolidBrush(fillColor), x, y, 1, 1);
+                        }
+                    }
                 }
             }
         }
 
         public override bool Contains(Point p)
         {
-            if (points.Count < 2) return false;
-
-            int x = Math.Min(points[0].X, points[1].X);
-            int y = Math.Min(points[0].Y, points[1].Y);
-            int width = Math.Abs(points[1].X - points[0].X);
-            int height = Math.Abs(points[1].Y - points[0].Y);
-
-            return p.X >= x && p.X <= x + width && p.Y >= y && p.Y <= y + height;
+            if (points.Count < 4) return false;
+            // Используем стандартный алгоритм для проверки попадания точки в выпуклый четырёхугольник
+            var poly = points.ToArray();
+            bool inside = false;
+            for (int i = 0, j = poly.Length - 1; i < poly.Length; j = i++)
+            {
+                if (((poly[i].Y > p.Y) != (poly[j].Y > p.Y)) &&
+                    (p.X < (poly[j].X - poly[i].X) * (p.Y - poly[i].Y) / (poly[j].Y - poly[i].Y + 0.0001) + poly[i].X))
+                    inside = !inside;
+            }
+            return inside;
         }
 
         public override void Move(int dx, int dy)
@@ -64,41 +126,34 @@ namespace DrawingEditor.Shapes
 
         public void Rotate(float angle)
         {
-            // Находим центр прямоугольника
-            float centerX = (float)Points.Average(p => p.X);
-            float centerY = (float)Points.Average(p => p.Y);
-            
-            // Конвертируем угол в радианы
+            if (points.Count < 4) return;
+            float centerX = (float)points.Average(p => p.X);
+            float centerY = (float)points.Average(p => p.Y);
             double angleRad = angle * Math.PI / 180.0;
             double cos = Math.Cos(angleRad);
             double sin = Math.Sin(angleRad);
-
-            // Поворачиваем каждую точку вокруг центра
-            for (int i = 0; i < Points.Count; i++)
+            for (int i = 0; i < points.Count; i++)
             {
-                float dx = Points[i].X - centerX;
-                float dy = Points[i].Y - centerY;
-                
+                float dx = points[i].X - centerX;
+                float dy = points[i].Y - centerY;
                 int newX = (int)(centerX + dx * cos - dy * sin);
                 int newY = (int)(centerY + dx * sin + dy * cos);
-                
-                Points[i] = new Point(newX, newY);
+                points[i] = new Point(newX, newY);
             }
         }
 
         public void Scale(float sx, float sy)
         {
-            Point center = new Point(
-                (int)points.Average(p => (double)p.X),
-                (int)points.Average(p => (double)p.Y)
-            );
-
+            if (points.Count < 4) return;
+            float centerX = (float)points.Average(p => p.X);
+            float centerY = (float)points.Average(p => p.Y);
             for (int i = 0; i < points.Count; i++)
             {
-                points[i] = new Point(
-                    center.X + (int)((points[i].X - center.X) * sx),
-                    center.Y + (int)((points[i].Y - center.Y) * sy)
-                );
+                float dx = points[i].X - centerX;
+                float dy = points[i].Y - centerY;
+                int newX = (int)(centerX + dx * sx);
+                int newY = (int)(centerY + dy * sy);
+                points[i] = new Point(newX, newY);
             }
         }
     }

@@ -278,22 +278,23 @@ namespace DrawingEditor
                 switch (currentMode)
                 {
                     case EditMode.Draw:
+                        isDrawing = true; // Ставим isDrawing в true для всех фигур в режиме Draw
+                        CreateShape();
+                        currentShape.IsDrawing = true; // Устанавливаем и для текущей фигуры
+
                         if (currentTool == ToolType.Polyline)
                         {
-                            if (!isDrawing)
+                            // Логика для Polyline остается почти такой же
+                            if (!(currentShape is Polyline) || !((Polyline)currentShape).IsDrawingPolyline) // Проверяем, не рисуется ли уже
                             {
-                                // Начинаем новую ломаную
-                                isDrawing = true;
-                                CreateShape();
-                                currentShape.IsDrawing = true;
+                                // Начинаем новую ломаную, если это первый клик для нее
                                 currentShape.AddPoint(e.Location); // Первая точка
+                                ((Polyline)currentShape).IsDrawingPolyline = true;
                             }
                             else
                             {
-                                // Добавляем новую точку к существующей ломаной
-                                currentShape.AddPoint(e.Location);
+                                currentShape.AddPoint(e.Location); // Добавляем новую точку
                             }
-                            Refresh();
                         }
                         else if (currentTool == ToolType.BezierCurve)
                         {
@@ -319,14 +320,21 @@ namespace DrawingEditor
                                 //currentShape.AddPoint(e.Location); // Новая конечная точка
                             }
                         }
+                        else if (currentTool == ToolType.Polygon)
+                        {
+                            currentShape.AddPoint(e.Location); // Первая точка - центр
+                            // Добавляем "пустышку" для второй точки, чтобы UpdatePoint работал
+                            // Эта точка будет обновляться в MouseMove
+                            // currentShape.AddPoint(e.Location); 
+                            // Вместо добавления второй точки здесь, она будет определяться в MouseMove
+                            // и использоваться для UpdatePoint
+                        }
                         else
                         {
-                            // Обычное рисование для других фигур
-                            isDrawing = true;
+                            // Обычное рисование для других фигур (Line, RectangleShape, Ellipse)
                             startPoint = e.Location;
-                            CreateShape();
                             currentShape.AddPoint(startPoint);
-                            currentShape.AddPoint(startPoint);
+                            currentShape.AddPoint(startPoint); // Добавляем вторую точку для UpdatePoint
                         }
                         Refresh();
                         break;
@@ -356,18 +364,11 @@ namespace DrawingEditor
             }
             else if (e.Button == MouseButtons.Right)
             {
-                if (currentTool == ToolType.Polyline && isDrawing)
+                if (currentTool == ToolType.Polyline && currentShape is Polyline polyline && polyline.IsDrawingPolyline)
                 {
-                    // Удаляем последнюю точку, если она была временной
-                    if (currentShape.Points.Count > 0)
+                    polyline.IsDrawingPolyline = false; // Завершаем рисование ломаной
+                    if (currentShape.Points.Count >= 2) 
                     {
-                        ((List<Point>)currentShape.Points).RemoveAt(currentShape.Points.Count - 1);
-                    }
-                    
-                    // Завершаем рисование ломаной
-                    if (currentShape.Points.Count >= 2)
-                    {
-                        currentShape.IsDrawing = false;
                         shapes.Add(currentShape);
                     }
                     currentShape = null;
@@ -388,33 +389,34 @@ namespace DrawingEditor
 
         private void Form1_MouseMove(object sender, MouseEventArgs e)
         {
-            if (currentShape != null && currentMode == EditMode.Draw)
+            if (isDrawing && currentShape != null && currentMode == EditMode.Draw)
             {
-                if (currentTool == ToolType.Polyline && isDrawing)
+                if (currentTool == ToolType.Polygon)
                 {
-                    // Временно добавляем или обновляем последнюю точку
-                    if (currentShape.Points.Count > 0)
+                    // Для полигона, если interactionCenter уже задан (после первого клика)
+                    // обновляем его радиус на основе текущей позиции мыши
+                    // currentShape.UpdatePoint(1, e.Location); // Передаем условный индекс 1
+                    // Вместо UpdatePoint(1,...) напрямую вызываем AddPoint, 
+                    // который в Polygon теперь обрабатывает вторую точку для радиуса
+                    if (currentShape.Points.Count == ((Polygon)currentShape).SidesCount && ((Polygon)currentShape).InteractionCenter != null) // Убедимся, что центр уже есть
                     {
-                        if (currentShape.Points.Count == ((List<Point>)currentShape.Points).Capacity)
-                        {
-                            currentShape.AddPoint(e.Location);
-                        }
-                        else
-                        {
-                            currentShape.UpdatePoint(currentShape.Points.Count - 1, e.Location);
-                        }
+                       ((Polygon)currentShape).AddPoint(e.Location); // Это обновит interactionRadius и временные вершины
                     }
-                    Refresh();
                 }
-                else if (currentTool == ToolType.BezierCurve && isBezierDrawing)
+                else if (currentTool == ToolType.Polyline)
+                {
+                    // ... (логика для Polyline)
+                }
+                else if (currentTool == ToolType.BezierCurve)
                 {
                     if (e.Button == MouseButtons.Left)
                     {
                         ((BezierCurve)currentShape).UpdateControlPoints(e.Location);
                     }
                 }
-                else if (isDrawing)
+                else
                 {
+                    // Для других фигур (Line, RectangleShape, Ellipse)
                     currentShape.UpdatePoint(1, e.Location);
                 }
                 Refresh();
@@ -460,39 +462,82 @@ namespace DrawingEditor
 
         private void Form1_MouseUp(object sender, MouseEventArgs e)
         {
-            isDragging = false;
-            if (currentMode == EditMode.Draw)
+            if (isDrawing && currentShape != null && currentMode == EditMode.Draw)
             {
-                if (currentShape != null)
+                currentShape.IsDrawing = false; // Завершаем флаг рисования для фигуры
+
+                if (currentTool == ToolType.Polygon)
                 {
-                    if (currentTool == ToolType.Polyline)
+                    ((Polygon)currentShape).FinalizeShape();
+                    if (currentShape.Points.Count == ((Polygon)currentShape).SidesCount && !currentShape.Points.Any(p => p.IsEmpty)) 
                     {
-                        // Ничего не делаем при отпускании кнопки для ломаной
-                        return;
-                    }
-                    else if (currentTool == ToolType.BezierCurve)
-                    {
-                        currentShape.IsDrawing = false;
-                    }
-                    else if (isDrawing)
-                    {
-                        currentShape.UpdatePoint(1, e.Location);
                         shapes.Add(currentShape);
-                        currentShape = null;
-                        isDrawing = false;
                     }
-                    Refresh();
                 }
+                else if (currentTool == ToolType.Polyline)
+                {
+                    // Для полилайна завершение происходит по правой кнопке
+                    // Здесь можно ничего не делать, или если нужно добавить последнюю точку, то добавить
+                    // но обычно MouseUp левой кнопки не завершает полилайн.
+                    return; // Возвращаемся, чтобы не сбросить currentShape и isDrawing
+                }
+                else if (currentTool == ToolType.BezierCurve)
+                {
+                    // ... (логика для BezierCurve, возможно, тоже FinalizeShape)
+                }
+                else
+                {
+                     // Для Line, RectangleShape, Ellipse
+                    currentShape.UpdatePoint(1, e.Location); // Обновляем последнюю точку
+                    shapes.Add(currentShape);
+                }
+                
+                currentShape = null;
+                isDrawing = false; // Сбрасываем общий флаг рисования
+                Refresh();
             }
+            isDragging = false; // Сбрасываем флаг перетаскивания в любом случае
         }
 
         private System.Drawing.Rectangle GetShapeBounds(Shape shape)
         {
-            int minX = shape.Points.Min(p => p.X);
-            int minY = shape.Points.Min(p => p.Y);
-            int maxX = shape.Points.Max(p => p.X);
-            int maxY = shape.Points.Max(p => p.Y);
-            return System.Drawing.Rectangle.FromLTRB(minX - 5, minY - 5, maxX + 5, maxY + 5);
+            // Для эллипса ищем bounding box по всем точкам контура с учётом поворота
+            if (shape is DrawingEditor.Shapes.Ellipse ellipse && ellipse.Points.Count >= 2)
+            {
+                var startPoint = ellipse.Points[0];
+                var endPoint = ellipse.Points[1];
+                int centerX = (startPoint.X + endPoint.X) / 2;
+                int centerY = (startPoint.Y + endPoint.Y) / 2;
+                int radiusX = Math.Abs(endPoint.X - startPoint.X) / 2;
+                int radiusY = Math.Abs(endPoint.Y - startPoint.Y) / 2;
+                float rotationAngle = ellipse.GetType().GetField("rotationAngle", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).GetValue(ellipse) is float a ? a : 0f;
+                double angleRad = rotationAngle * Math.PI / 180.0;
+                List<Point> ellipseContour = new List<Point>();
+                int steps = (int)(2 * Math.PI * Math.Max(radiusX, radiusY));
+                if (steps < 60) steps = 60;
+                for (int i = 0; i <= steps; i++)
+                {
+                    double t = 2 * Math.PI * i / steps;
+                    double x0 = radiusX * Math.Cos(t);
+                    double y0 = radiusY * Math.Sin(t);
+                    double xr = x0 * Math.Cos(angleRad) - y0 * Math.Sin(angleRad);
+                    double yr = x0 * Math.Sin(angleRad) + y0 * Math.Cos(angleRad);
+                    int x = (int)Math.Round(centerX + xr);
+                    int y = (int)Math.Round(centerY + yr);
+                    ellipseContour.Add(new Point(x, y));
+                }
+                int minX = ellipseContour.Min(p => p.X);
+                int maxX = ellipseContour.Max(p => p.X);
+                int minY = ellipseContour.Min(p => p.Y);
+                int maxY = ellipseContour.Max(p => p.Y);
+                return System.Drawing.Rectangle.FromLTRB(minX - 5, minY - 5, maxX + 5, maxY + 5);
+            }
+            // Для остальных фигур — по Points
+            int minX2 = shape.Points.Min(p => p.X);
+            int minY2 = shape.Points.Min(p => p.Y);
+            int maxX2 = shape.Points.Max(p => p.X);
+            int maxY2 = shape.Points.Max(p => p.Y);
+            return System.Drawing.Rectangle.FromLTRB(minX2 - 5, minY2 - 5, maxX2 + 5, maxY2 + 5);
         }
     }
 }

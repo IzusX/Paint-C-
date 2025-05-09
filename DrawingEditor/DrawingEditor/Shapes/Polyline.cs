@@ -5,6 +5,14 @@ namespace DrawingEditor.Shapes
 {
     public class Polyline : Shape, ITransformable
     {
+        private bool _isDrawingPolyline = false; // Флаг, что идет процесс рисования именно этой ломаной
+
+        public bool IsDrawingPolyline
+        {
+            get => _isDrawingPolyline;
+            set => _isDrawingPolyline = value;
+        }
+
         public Polyline()
         {
             points = new List<Point>();
@@ -20,7 +28,7 @@ namespace DrawingEditor.Shapes
             // Рисуем линии между точками
             for (int i = 0; i < points.Count - 1; i++)
             {
-                DrawLine(g, points[i], points[i + 1]);
+                DrawLineBresenham(g, points[i], points[i + 1], strokeColor, strokeWidth);
             }
 
             // Рисуем точки вершин при активном рисовании
@@ -38,41 +46,6 @@ namespace DrawingEditor.Shapes
             g.FillEllipse(new SolidBrush(color),
                 center.X - radius, center.Y - radius,
                 radius * 2, radius * 2);
-        }
-
-        private void DrawLine(Graphics g, Point p1, Point p2)
-        {
-            // Используем алгоритм Брезенхэма для рисования линии
-            int x1 = p1.X, y1 = p1.Y, x2 = p2.X, y2 = p2.Y;
-            int dx = Math.Abs(x2 - x1);
-            int dy = Math.Abs(y2 - y1);
-            int sx = x1 < x2 ? 1 : -1;
-            int sy = y1 < y2 ? 1 : -1;
-            int err = dx - dy;
-
-            while (true)
-            {
-                for (int w = -strokeWidth / 2; w <= strokeWidth / 2; w++)
-                {
-                    for (int h = -strokeWidth / 2; h <= strokeWidth / 2; h++)
-                    {
-                        g.FillRectangle(new SolidBrush(strokeColor), x1 + w, y1 + h, 1, 1);
-                    }
-                }
-
-                if (x1 == x2 && y1 == y2) break;
-                int e2 = 2 * err;
-                if (e2 > -dy)
-                {
-                    err -= dy;
-                    x1 += sx;
-                }
-                if (e2 < dx)
-                {
-                    err += dx;
-                    y1 += sy;
-                }
-            }
         }
 
         public override bool Contains(Point p)

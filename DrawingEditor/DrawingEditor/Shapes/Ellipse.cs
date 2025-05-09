@@ -7,6 +7,7 @@ namespace DrawingEditor.Shapes
     {
         private Point startPoint;
         private Point endPoint;
+        private float rotationAngle = 0;
 
         public Ellipse()
         {
@@ -23,75 +24,71 @@ namespace DrawingEditor.Shapes
             startPoint = points[0];
             endPoint = points[1];
 
-            // Находим центр и радиусы эллипса
             int centerX = (startPoint.X + endPoint.X) / 2;
             int centerY = (startPoint.Y + endPoint.Y) / 2;
             int radiusX = Math.Abs(endPoint.X - startPoint.X) / 2;
             int radiusY = Math.Abs(endPoint.Y - startPoint.Y) / 2;
 
-            // Рисуем эллипс алгоритмом средней точки
-            DrawEllipse(g, centerX, centerY, radiusX, radiusY);
+            // Сохраняем все точки контура эллипса
+            int steps = (int)(2 * Math.PI * Math.Max(radiusX, radiusY));
+            if (steps < 60) steps = 60;
+            double angleRad = rotationAngle * Math.PI / 180.0;
+            Point? prev = null;
+            List<Point> ellipseContour = new List<Point>();
+            for (int i = 0; i <= steps; i++)
+            {
+                double t = 2 * Math.PI * i / steps;
+                double x0 = radiusX * Math.Cos(t);
+                double y0 = radiusY * Math.Sin(t);
+                // Поворот
+                double xr = x0 * Math.Cos(angleRad) - y0 * Math.Sin(angleRad);
+                double yr = x0 * Math.Sin(angleRad) + y0 * Math.Cos(angleRad);
+                int x = (int)Math.Round(centerX + xr);
+                int y = (int)Math.Round(centerY + yr);
+                ellipseContour.Add(new Point(x, y));
+                if (prev != null)
+                {
+                    DrawLineBresenham(g, prev.Value, new Point(x, y), strokeColor, strokeWidth);
+                }
+                prev = new Point(x, y);
+            }
 
-            // Если есть заливка
+            // Заливка по новой рамке
             if (fillColor != Color.Transparent)
             {
-                FillEllipse(g, centerX, centerY, radiusX, radiusY);
+                int minX = ellipseContour.Min(p => p.X);
+                int maxX = ellipseContour.Max(p => p.X);
+                int minY = ellipseContour.Min(p => p.Y);
+                int maxY = ellipseContour.Max(p => p.Y);
+                FillEllipse(g, centerX, centerY, radiusX, radiusY, minX, maxX, minY, maxY);
             }
         }
 
         private void DrawEllipse(Graphics g, int centerX, int centerY, int radiusX, int radiusY)
         {
-            int x = 0;
-            int y = radiusY;
-            
-            // Начальные значения для алгоритма
-            double d1 = (radiusY * radiusY) - (radiusX * radiusX * radiusY) + (0.25f * radiusX * radiusX);
-            double dx = 2 * radiusY * radiusY * x;
-            double dy = 2 * radiusX * radiusX * y;
-
-            // Первая часть
-            while (dx < dy)
+            // Учитываем угол поворота (rotationAngle)
+            double angleRad = rotationAngle * Math.PI / 180.0;
+            double cos = Math.Cos(-angleRad); // обратное вращение
+            double sin = Math.Sin(-angleRad);
+            int minX = centerX - radiusX;
+            int maxX = centerX + radiusX;
+            int minY = centerY - radiusY;
+            int maxY = centerY + radiusY;
+            for (int y = minY; y <= maxY; y++)
             {
-                PlotEllipsePoints(g, centerX, centerY, x, y);
-
-                if (d1 < 0)
+                for (int x = minX; x <= maxX; x++)
                 {
-                    x++;
-                    dx = dx + (2 * radiusY * radiusY);
-                    d1 = d1 + dx + (radiusY * radiusY);
-                }
-                else
-                {
-                    x++;
-                    y--;
-                    dx = dx + (2 * radiusY * radiusY);
-                    dy = dy - (2 * radiusX * radiusX);
-                    d1 = d1 + dx - dy + (radiusY * radiusY);
-                }
-            }
-
-            // Вторая часть
-            double d2 = ((radiusY * radiusY) * ((x + 0.5f) * (x + 0.5f))) +
-                       ((radiusX * radiusX) * ((y - 1) * (y - 1))) -
-                       (radiusX * radiusX * radiusY * radiusY);
-
-            while (y >= 0)
-            {
-                PlotEllipsePoints(g, centerX, centerY, x, y);
-
-                if (d2 > 0)
-                {
-                    y--;
-                    dy = dy - (2 * radiusX * radiusX);
-                    d2 = d2 + (radiusX * radiusX) - dy;
-                }
-                else
-                {
-                    y--;
-                    x++;
-                    dx = dx + (2 * radiusY * radiusY);
-                    dy = dy - (2 * radiusX * radiusX);
-                    d2 = d2 + dx - dy + (radiusX * radiusX);
+                    // Переводим в систему координат эллипса
+                    double dx = x - centerX;
+                    double dy = y - centerY;
+                    // Обратное вращение
+                    double xr = dx * cos - dy * sin;
+                    double yr = dx * sin + dy * cos;
+                    // Проверяем попадание в эллипс
+                    if ((xr * xr) / (radiusX * radiusX) + (yr * yr) / (radiusY * radiusY) <= 1.0)
+                    {
+                        g.FillRectangle(new SolidBrush(fillColor), x, y, 1, 1);
+                    }
                 }
             }
         }
@@ -115,15 +112,23 @@ namespace DrawingEditor.Shapes
             DrawPoint(centerX - x, centerY - y);
         }
 
-        private void FillEllipse(Graphics g, int centerX, int centerY, int radiusX, int radiusY)
+        // Новый вариант FillEllipse с рамкой
+        private void FillEllipse(Graphics g, int centerX, int centerY, int radiusX, int radiusY, int minX, int maxX, int minY, int maxY)
         {
-            for (int y = -radiusY; y <= radiusY; y++)
+            double angleRad = rotationAngle * Math.PI / 180.0;
+            double cos = Math.Cos(-angleRad); // обратное вращение
+            double sin = Math.Sin(-angleRad);
+            for (int y = minY; y <= maxY; y++)
             {
-                for (int x = -radiusX; x <= radiusX; x++)
+                for (int x = minX; x <= maxX; x++)
                 {
-                    if ((x * x * radiusY * radiusY + y * y * radiusX * radiusX) <= (radiusX * radiusX * radiusY * radiusY))
+                    double dx = x - centerX;
+                    double dy = y - centerY;
+                    double xr = dx * cos - dy * sin;
+                    double yr = dx * sin + dy * cos;
+                    if ((xr * xr) / (radiusX * radiusX) + (yr * yr) / (radiusY * radiusY) <= 1.0)
                     {
-                        g.FillRectangle(new SolidBrush(fillColor), centerX + x, centerY + y, 1, 1);
+                        g.FillRectangle(new SolidBrush(fillColor), x, y, 1, 1);
                     }
                 }
             }
@@ -154,26 +159,8 @@ namespace DrawingEditor.Shapes
 
         public void Rotate(float angle)
         {
-            // Находим центр эллипса
-            float centerX = (float)Points.Average(p => p.X);
-            float centerY = (float)Points.Average(p => p.Y);
-            
-            // Конвертируем угол в радианы
-            double angleRad = angle * Math.PI / 180.0;
-            double cos = Math.Cos(angleRad);
-            double sin = Math.Sin(angleRad);
-
-            // Поворачиваем каждую точку вокруг центра
-            for (int i = 0; i < Points.Count; i++)
-            {
-                float dx = Points[i].X - centerX;
-                float dy = Points[i].Y - centerY;
-                
-                int newX = (int)(centerX + dx * cos - dy * sin);
-                int newY = (int)(centerY + dx * sin + dy * cos);
-                
-                Points[i] = new Point(newX, newY);
-            }
+            rotationAngle += angle;
+            rotationAngle %= 360f;
         }
 
         public void Scale(float sx, float sy)

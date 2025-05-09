@@ -15,41 +15,7 @@ namespace DrawingEditor.Shapes
         public override void Draw(Graphics g)
         {
             if (points.Count < 2) return;
-            DrawLine(g, points[0], points[1]);
-        }
-
-        private void DrawLine(Graphics g, Point p1, Point p2)
-        {
-            int x1 = p1.X, y1 = p1.Y, x2 = p2.X, y2 = p2.Y;
-            int dx = Math.Abs(x2 - x1);
-            int dy = Math.Abs(y2 - y1);
-            int sx = x1 < x2 ? 1 : -1;
-            int sy = y1 < y2 ? 1 : -1;
-            int err = dx - dy;
-
-            while (true)
-            {
-                for (int w = -strokeWidth / 2; w <= strokeWidth / 2; w++)
-                {
-                    for (int h = -strokeWidth / 2; h <= strokeWidth / 2; h++)
-                    {
-                        g.FillRectangle(new SolidBrush(strokeColor), x1 + w, y1 + h, 1, 1);
-                    }
-                }
-
-                if (x1 == x2 && y1 == y2) break;
-                int e2 = 2 * err;
-                if (e2 > -dy)
-                {
-                    err -= dy;
-                    x1 += sx;
-                }
-                if (e2 < dx)
-                {
-                    err += dx;
-                    y1 += sy;
-                }
-            }
+            DrawLineBresenham(g, points[0], points[1], strokeColor, strokeWidth);
         }
 
         public override bool Contains(Point p)

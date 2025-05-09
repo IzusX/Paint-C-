@@ -8,114 +8,151 @@ namespace DrawingEditor.Shapes
 {
     public class Polygon : Shape, ITransformable
     {
-        private int sides; // количество сторон
-        private double radius; // радиус описанной окружности
+        private int sides;
+        // Храним центр и радиус отдельно для интерактивного рисования
+        private Point? interactionCenter = null;
+        private double interactionRadius = 0;
+
+        // Публичные геттеры для доступа из Form1
+        public int SidesCount => sides;
+        public Point? InteractionCenter => interactionCenter;
 
         public Polygon(int numberOfSides = 3)
         {
-            points = new List<Point>();
+            points = new List<Point>(); // Будут храниться только вершины
             strokeColor = Color.Black;
             fillColor = Color.Transparent;
             strokeWidth = 1;
-            sides = Math.Max(3, numberOfSides); // минимум 3 стороны
+            sides = Math.Max(3, numberOfSides);
+        }
+
+        public override void AddPoint(Point p)
+        {
+            if (interactionCenter == null)
+            {
+                interactionCenter = p; // Первая точка - центр
+                // Добавляем временные точки, чтобы currentShape.Points не был пустым в Form1
+                // Эти точки будут заменены на реальные вершины в FinalizeShape
+                for(int i = 0; i < sides; i++) points.Add(Point.Empty);
+            }
+            else
+            {
+                // Вторая точка определяет радиус
+                interactionRadius = Math.Sqrt(Math.Pow(p.X - interactionCenter.Value.X, 2) + Math.Pow(p.Y - interactionCenter.Value.Y, 2));
+                // Обновляем "временные" вершины для отрисовки в MouseMove
+                UpdateVerticesForDrawing(interactionCenter.Value, interactionRadius);
+            }
+        }
+
+        // Обновляет точки в списке points для предварительной отрисовки
+        private void UpdateVerticesForDrawing(Point center, double radius)
+        {
+            List<Point> tempVertices = CalculateVertices(center, radius);
+            for (int i = 0; i < sides; i++)
+            {
+                if (i < points.Count) points[i] = tempVertices[i];
+                else points.Add(tempVertices[i]);
+            }
+        }
+
+        // Вызывается при MouseUp для окончательного формирования вершин
+        public void FinalizeShape()
+        {
+            if (interactionCenter != null && interactionRadius > 0)
+            {
+                points.Clear();
+                points.AddRange(CalculateVertices(interactionCenter.Value, interactionRadius));
+            }
+            else if (interactionCenter != null && points.Count == sides && points.All(pt => pt.IsEmpty))
+            {
+                // Если радиус так и не был задан (например, два клика в одну точку)
+                // создаем маленький полигон по умолчанию вокруг центра
+                points.Clear();
+                points.AddRange(CalculateVertices(interactionCenter.Value, 5)); // радиус по умолчанию 5
+            }
+        }
+
+        public override void UpdatePoint(int index, Point newLocation)
+        {
+            // При интерактивном рисовании (MouseDrag) обновляем радиус и временные вершины
+            if (interactionCenter != null && index == 1) // index 1 условно для второй точки
+            {
+                interactionRadius = Math.Sqrt(Math.Pow(newLocation.X - interactionCenter.Value.X, 2) + Math.Pow(newLocation.Y - interactionCenter.Value.Y, 2));
+                UpdateVerticesForDrawing(interactionCenter.Value, interactionRadius);
+            }
         }
 
         public override void Draw(Graphics g)
         {
-            if (points.Count < 2) return;
+            // Рисуем, только если есть все вершины (или временные вершины)
+            if (points.Count != sides || points.Any(p => p.IsEmpty && interactionCenter == null)) return;
 
-            // Вычисляем центр и радиус
-            Point center = points[0];
-            Point edge = points[1];
-            radius = Math.Sqrt(Math.Pow(edge.X - center.X, 2) + Math.Pow(edge.Y - center.Y, 2));
-
-            // Вычисляем все точки многоугольника
-            List<Point> polygonPoints = CalculateVertices(center, radius);
-
-            // Рисуем заливку
-            if (fillColor != Color.Transparent)
+            List<Point> pointsToDraw = points;
+            if (interactionCenter != null && points.All(pt => pt.IsEmpty || !IsDrawing))
             {
-                FillPolygon(g, polygonPoints);
+                 // Если IsDrawing и точки еще не финализированы, используем временные из interactionRadius
+                 // Либо если interactionRadius == 0, но центр есть (например, один клик)
+                if (IsDrawing && interactionRadius > 0) {
+                    pointsToDraw = CalculateVertices(interactionCenter.Value, interactionRadius > 0 ? interactionRadius : 5 );
+                } else if (!IsDrawing && points.All(pt => pt.IsEmpty) && interactionCenter != null) {
+                     // Случай когда фигура добавлена в shapes, но была создана одним кликом
+                    pointsToDraw = CalculateVertices(interactionCenter.Value, 5 );
+                } else if (IsDrawing && interactionRadius == 0 && interactionCenter !=null) {
+                    // Один клик, ничего не рисуем пока, но объект создан
+                    return;
+                }
             }
 
-            // Рисуем стороны
-            for (int i = 0; i < polygonPoints.Count; i++)
+            if (fillColor != Color.Transparent)
             {
-                Point start = polygonPoints[i];
-                Point end = polygonPoints[(i + 1) % polygonPoints.Count];
-                DrawLine(g, start, end);
+                FillPolygon(g, pointsToDraw);
+            }
+            for (int i = 0; i < pointsToDraw.Count; i++)
+            {
+                Point start = pointsToDraw[i];
+                Point end = pointsToDraw[(i + 1) % pointsToDraw.Count];
+                DrawLineBresenham(g, start, end, strokeColor, strokeWidth);
             }
         }
 
         private List<Point> CalculateVertices(Point center, double radius)
         {
             List<Point> vertices = new List<Point>();
-            double angle = Math.PI * 2 / sides;
-
-            // Вычисляем угол поворота, чтобы первая вершина была сверху
-            double startAngle = -Math.PI / 2;
-
-            // Вычисляем координаты каждой вершины
+            double angleStep = Math.PI * 2 / sides;
+            double startAngle = -Math.PI / 2; // Начать с верхней точки
             for (int i = 0; i < sides; i++)
             {
-                double currentAngle = startAngle + angle * i;
-                int x = (int)(center.X + radius * Math.Cos(currentAngle));
-                int y = (int)(center.Y + radius * Math.Sin(currentAngle));
+                double currentAngle = startAngle + angleStep * i;
+                int x = (int)Math.Round(center.X + radius * Math.Cos(currentAngle));
+                int y = (int)Math.Round(center.Y + radius * Math.Sin(currentAngle));
                 vertices.Add(new Point(x, y));
             }
-
             return vertices;
-        }
-
-        private void DrawLine(Graphics g, Point p1, Point p2)
-        {
-            // Используем алгоритм Брезенхэма как в классе Line
-            int x1 = p1.X, y1 = p1.Y, x2 = p2.X, y2 = p2.Y;
-            int dx = Math.Abs(x2 - x1);
-            int dy = Math.Abs(y2 - y1);
-            int sx = x1 < x2 ? 1 : -1;
-            int sy = y1 < y2 ? 1 : -1;
-            int err = dx - dy;
-
-            while (true)
-            {
-                for (int w = -strokeWidth / 2; w <= strokeWidth / 2; w++)
-                {
-                    for (int h = -strokeWidth / 2; h <= strokeWidth / 2; h++)
-                    {
-                        g.FillRectangle(new SolidBrush(strokeColor), x1 + w, y1 + h, 1, 1);
-                    }
-                }
-
-                if (x1 == x2 && y1 == y2) break;
-                int e2 = 2 * err;
-                if (e2 > -dy)
-                {
-                    err -= dy;
-                    x1 += sx;
-                }
-                if (e2 < dx)
-                {
-                    err += dx;
-                    y1 += sy;
-                }
-            }
         }
 
         private void FillPolygon(Graphics g, List<Point> vertices)
         {
-            // Находим границы многоугольника
-            int minX = vertices.Min(p => p.X);
-            int maxX = vertices.Max(p => p.X);
+            if (vertices.Count < 3) return;
             int minY = vertices.Min(p => p.Y);
             int maxY = vertices.Max(p => p.Y);
-
-            // Проверяем каждую точку внутри границ
             for (int y = minY; y <= maxY; y++)
             {
-                for (int x = minX; x <= maxX; x++)
+                List<int> xIntersections = new List<int>();
+                for (int i = 0; i < vertices.Count; i++)
                 {
-                    if (IsPointInPolygon(new Point(x, y), vertices))
+                    Point p1 = vertices[i];
+                    Point p2 = vertices[(i + 1) % vertices.Count];
+                    if ((p1.Y <= y && p2.Y > y) || (p2.Y <= y && p1.Y > y))
+                    {
+                        if (p1.Y == p2.Y) continue; 
+                        double x = p1.X + (double)(y - p1.Y) / (p2.Y - p1.Y) * (p2.X - p1.X);
+                        xIntersections.Add((int)Math.Round(x));
+                    }
+                }
+                xIntersections.Sort();
+                for (int i = 0; i + 1 < xIntersections.Count; i += 2)
+                {
+                    for (int x = xIntersections[i]; x <= xIntersections[i + 1]; x++)
                     {
                         g.FillRectangle(new SolidBrush(fillColor), x, y, 1, 1);
                     }
@@ -123,14 +160,23 @@ namespace DrawingEditor.Shapes
             }
         }
 
-        private bool IsPointInPolygon(Point p, List<Point> vertices)
+        public override bool Contains(Point p)
         {
+            // Используем актуальные вершины для проверки
+            List<Point> currentVertices = points;
+            if (interactionCenter != null && IsDrawing && interactionRadius > 0) {
+                 currentVertices = CalculateVertices(interactionCenter.Value, interactionRadius);
+            } else if (interactionCenter != null && points.All(pt => pt.IsEmpty)) {
+                 currentVertices = CalculateVertices(interactionCenter.Value, 5);
+            }
+
+            if (currentVertices.Count != sides || currentVertices.Any(pt => pt.IsEmpty)) return false;
+
             bool inside = false;
-            for (int i = 0, j = vertices.Count - 1; i < vertices.Count; j = i++)
+            for (int i = 0, j = currentVertices.Count - 1; i < currentVertices.Count; j = i++)
             {
-                if (((vertices[i].Y > p.Y) != (vertices[j].Y > p.Y)) &&
-                    (p.X < (vertices[j].X - vertices[i].X) * (p.Y - vertices[i].Y) / 
-                    (vertices[j].Y - vertices[i].Y) + vertices[i].X))
+                if (((currentVertices[i].Y > p.Y) != (currentVertices[j].Y > p.Y)) &&
+                    (p.X < (currentVertices[j].X - currentVertices[i].X) * (p.Y - currentVertices[i].Y) / (currentVertices[j].Y - currentVertices[i].Y + 0.00001) + currentVertices[i].X))
                 {
                     inside = !inside;
                 }
@@ -138,55 +184,40 @@ namespace DrawingEditor.Shapes
             return inside;
         }
 
-        // Добавим обязательные методы из абстрактного класса Shape
-        public override bool Contains(Point p)
-        {
-            if (points.Count < 2) return false;
-
-            Point center = points[0];
-            Point edge = points[1];
-            radius = Math.Sqrt(Math.Pow(edge.X - center.X, 2) + Math.Pow(edge.Y - center.Y, 2));
-            List<Point> vertices = CalculateVertices(center, radius);
-
-            return IsPointInPolygon(p, vertices);
-        }
-
         public override void Move(int dx, int dy)
         {
+            // При перемещении двигаем сохраненный центр и все вершины
+            if (interactionCenter != null) {
+                interactionCenter = new Point(interactionCenter.Value.X + dx, interactionCenter.Value.Y + dy);
+            }
             for (int i = 0; i < points.Count; i++)
             {
                 points[i] = new Point(points[i].X + dx, points[i].Y + dy);
             }
         }
 
-        // Реализация методов интерфейса ITransformable
         public void Rotate(float angle)
         {
-            Point center = new Point(
-                (int)points.Average(p => (double)p.X),
-                (int)points.Average(p => (double)p.Y)
-            );
-
+            if (points.Count != sides || points.Any(p => p.IsEmpty)) return;
+            Point center = new Point((int)points.Average(p => p.X), (int)points.Average(p => p.Y));
             double radians = angle * Math.PI / 180;
             for (int i = 0; i < points.Count; i++)
             {
                 int dx = points[i].X - center.X;
                 int dy = points[i].Y - center.Y;
-
                 points[i] = new Point(
                     center.X + (int)(dx * Math.Cos(radians) - dy * Math.Sin(radians)),
                     center.Y + (int)(dx * Math.Sin(radians) + dy * Math.Cos(radians))
                 );
             }
+            // Если поворачиваем уже созданный полигон, нужно обновить и interactionCenter, если он есть
+            // и если он совпадает с геометрическим центром. Для простоты пока не делаем.
         }
 
         public void Scale(float sx, float sy)
         {
-            Point center = new Point(
-                (int)points.Average(p => (double)p.X),
-                (int)points.Average(p => (double)p.Y)
-            );
-
+            if (points.Count != sides || points.Any(p => p.IsEmpty)) return;
+            Point center = new Point((int)points.Average(p => p.X), (int)points.Average(p => p.Y));
             for (int i = 0; i < points.Count; i++)
             {
                 points[i] = new Point(
@@ -194,6 +225,7 @@ namespace DrawingEditor.Shapes
                     center.Y + (int)((points[i].Y - center.Y) * sy)
                 );
             }
+            // Аналогично Rotate, нужно подумать про interactionCenter и interactionRadius при масштабировании
         }
     }
 }
