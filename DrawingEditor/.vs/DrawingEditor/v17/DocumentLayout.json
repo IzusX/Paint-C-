@@ -7,6 +7,18 @@
       "RelativeMoniker": "D:0:0:{DF5229EA-9B54-461E-B193-B11C29F6B703}|DrawingEditor\\DrawingEditor.csproj|solutionrelative:drawingeditor\\shapes\\ellipse.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
+      "AbsoluteMoniker": "D:0:0:{DF5229EA-9B54-461E-B193-B11C29F6B703}|DrawingEditor\\DrawingEditor.csproj|c:\\programming\\c#\\pomogite\\drawingeditor\\drawingeditor\\forms\\form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DF5229EA-9B54-461E-B193-B11C29F6B703}|DrawingEditor\\DrawingEditor.csproj|solutionrelative:drawingeditor\\forms\\form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DF5229EA-9B54-461E-B193-B11C29F6B703}|DrawingEditor\\DrawingEditor.csproj|c:\\programming\\c#\\pomogite\\drawingeditor\\drawingeditor\\bezieronlyprogram\\form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DF5229EA-9B54-461E-B193-B11C29F6B703}|DrawingEditor\\DrawingEditor.csproj|solutionrelative:drawingeditor\\bezieronlyprogram\\form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{DF5229EA-9B54-461E-B193-B11C29F6B703}|DrawingEditor\\DrawingEditor.csproj|c:\\programming\\c#\\pomogite\\drawingeditor\\drawingeditor\\shapes\\beziercurve.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{DF5229EA-9B54-461E-B193-B11C29F6B703}|DrawingEditor\\DrawingEditor.csproj|solutionrelative:drawingeditor\\shapes\\beziercurve.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{DF5229EA-9B54-461E-B193-B11C29F6B703}|DrawingEditor\\DrawingEditor.csproj|c:\\programming\\c#\\pomogite\\drawingeditor\\drawingeditor\\shapes\\rectangleshape.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{DF5229EA-9B54-461E-B193-B11C29F6B703}|DrawingEditor\\DrawingEditor.csproj|solutionrelative:drawingeditor\\shapes\\rectangleshape.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
@@ -17,14 +29,6 @@
     {
       "AbsoluteMoniker": "D:0:0:{DF5229EA-9B54-461E-B193-B11C29F6B703}|DrawingEditor\\DrawingEditor.csproj|c:\\programming\\c#\\pomogite\\drawingeditor\\drawingeditor\\core\\canvas.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{DF5229EA-9B54-461E-B193-B11C29F6B703}|DrawingEditor\\DrawingEditor.csproj|solutionrelative:drawingeditor\\core\\canvas.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{DF5229EA-9B54-461E-B193-B11C29F6B703}|DrawingEditor\\DrawingEditor.csproj|c:\\programming\\c#\\pomogite\\drawingeditor\\drawingeditor\\shapes\\beziercurve.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{DF5229EA-9B54-461E-B193-B11C29F6B703}|DrawingEditor\\DrawingEditor.csproj|solutionrelative:drawingeditor\\shapes\\beziercurve.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{DF5229EA-9B54-461E-B193-B11C29F6B703}|DrawingEditor\\DrawingEditor.csproj|c:\\programming\\c#\\pomogite\\drawingeditor\\drawingeditor\\forms\\form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{DF5229EA-9B54-461E-B193-B11C29F6B703}|DrawingEditor\\DrawingEditor.csproj|solutionrelative:drawingeditor\\forms\\form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{DF5229EA-9B54-461E-B193-B11C29F6B703}|DrawingEditor\\DrawingEditor.csproj|c:\\programming\\c#\\pomogite\\drawingeditor\\drawingeditor\\shapes\\polygon.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -54,11 +58,35 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 5,
+          "SelectedChildIndex": 7,
           "Children": [
             {
               "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Form1.cs",
+              "DocumentMoniker": "C:\\Programming\\C#\\pomogite\\DrawingEditor\\DrawingEditor\\BezierOnlyProgram\\Form1.cs",
+              "RelativeDocumentMoniker": "DrawingEditor\\BezierOnlyProgram\\Form1.cs",
+              "ToolTip": "C:\\Programming\\C#\\pomogite\\DrawingEditor\\DrawingEditor\\BezierOnlyProgram\\Form1.cs",
+              "RelativeToolTip": "DrawingEditor\\BezierOnlyProgram\\Form1.cs",
+              "ViewState": "AgIAABUAAAAAAAAAAAAYwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-10T02:20:07.337Z"
+            },
+            {
+              "$type": "Document",
               "DocumentIndex": 1,
+              "Title": "Form1.cs",
+              "DocumentMoniker": "C:\\Programming\\C#\\pomogite\\DrawingEditor\\DrawingEditor\\Forms\\Form1.cs",
+              "RelativeDocumentMoniker": "DrawingEditor\\Forms\\Form1.cs",
+              "ToolTip": "C:\\Programming\\C#\\pomogite\\DrawingEditor\\DrawingEditor\\Forms\\Form1.cs",
+              "RelativeToolTip": "DrawingEditor\\Forms\\Form1.cs",
+              "ViewState": "AgIAAIMBAAAAAAAAAAAIwDcBAAA+AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-16T12:09:36.302Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
               "Title": "RectangleShape.cs",
               "DocumentMoniker": "C:\\Programming\\C#\\pomogite\\DrawingEditor\\DrawingEditor\\Shapes\\RectangleShape.cs",
               "RelativeDocumentMoniker": "DrawingEditor\\Shapes\\RectangleShape.cs",
@@ -70,7 +98,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 9,
               "Title": "EditMode.cs",
               "DocumentMoniker": "C:\\Programming\\C#\\pomogite\\DrawingEditor\\DrawingEditor\\EditMode.cs",
               "RelativeDocumentMoniker": "DrawingEditor\\EditMode.cs",
@@ -82,7 +110,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 10,
+              "DocumentIndex": 11,
               "Title": "Polyline.cs",
               "DocumentMoniker": "C:\\Programming\\C#\\pomogite\\DrawingEditor\\DrawingEditor\\Shapes\\Polyline.cs",
               "RelativeDocumentMoniker": "DrawingEditor\\Shapes\\Polyline.cs",
@@ -94,7 +122,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
+              "DocumentIndex": 10,
               "Title": "Line.cs",
               "DocumentMoniker": "C:\\Programming\\C#\\pomogite\\DrawingEditor\\DrawingEditor\\Shapes\\Line.cs",
               "RelativeDocumentMoniker": "DrawingEditor\\Shapes\\Line.cs",
@@ -106,7 +134,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 7,
               "Title": "Polygon.cs",
               "DocumentMoniker": "C:\\Programming\\C#\\pomogite\\DrawingEditor\\DrawingEditor\\Shapes\\Polygon.cs",
               "RelativeDocumentMoniker": "DrawingEditor\\Shapes\\Polygon.cs",
@@ -124,38 +152,26 @@
               "RelativeDocumentMoniker": "DrawingEditor\\Shapes\\Ellipse.cs",
               "ToolTip": "C:\\Programming\\C#\\pomogite\\DrawingEditor\\DrawingEditor\\Shapes\\Ellipse.cs",
               "RelativeToolTip": "DrawingEditor\\Shapes\\Ellipse.cs",
-              "ViewState": "AgIAAOsAAAAAAAAAAAAIwPUAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAHIAAAAAAAAAAAAgwIUAAAANAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-04-16T14:17:05.676Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 3,
               "Title": "BezierCurve.cs",
               "DocumentMoniker": "C:\\Programming\\C#\\pomogite\\DrawingEditor\\DrawingEditor\\Shapes\\BezierCurve.cs",
               "RelativeDocumentMoniker": "DrawingEditor\\Shapes\\BezierCurve.cs",
               "ToolTip": "C:\\Programming\\C#\\pomogite\\DrawingEditor\\DrawingEditor\\Shapes\\BezierCurve.cs",
               "RelativeToolTip": "DrawingEditor\\Shapes\\BezierCurve.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABcAAAAJAAAAAAAAAA==",
+              "ViewState": "AgIAAIUAAAAAAAAAAAAwwEoAAAAoAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-04-16T14:17:05.126Z"
             },
             {
               "$type": "Document",
               "DocumentIndex": 5,
-              "Title": "Form1.cs",
-              "DocumentMoniker": "C:\\Programming\\C#\\pomogite\\DrawingEditor\\DrawingEditor\\Forms\\Form1.cs",
-              "RelativeDocumentMoniker": "DrawingEditor\\Forms\\Form1.cs",
-              "ToolTip": "C:\\Programming\\C#\\pomogite\\DrawingEditor\\DrawingEditor\\Forms\\Form1.cs",
-              "RelativeToolTip": "DrawingEditor\\Forms\\Form1.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAQAAAASAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-16T12:09:36.302Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
               "Title": "Shape.cs",
               "DocumentMoniker": "C:\\Programming\\C#\\pomogite\\DrawingEditor\\DrawingEditor\\Shapes\\Shape.cs",
               "RelativeDocumentMoniker": "DrawingEditor\\Shapes\\Shape.cs",
@@ -167,7 +183,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 8,
               "Title": "ITransformable.cs",
               "DocumentMoniker": "C:\\Programming\\C#\\pomogite\\DrawingEditor\\DrawingEditor\\Interfaces\\ITransformable.cs",
               "RelativeDocumentMoniker": "DrawingEditor\\Interfaces\\ITransformable.cs",
@@ -179,7 +195,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 6,
               "Title": "Canvas.cs",
               "DocumentMoniker": "C:\\Programming\\C#\\pomogite\\DrawingEditor\\DrawingEditor\\Core\\Canvas.cs",
               "RelativeDocumentMoniker": "DrawingEditor\\Core\\Canvas.cs",

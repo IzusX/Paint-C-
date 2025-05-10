@@ -53,6 +53,10 @@ namespace DrawingEditor
         private float scaleFactorX = 1.0f;
         private float scaleFactorY = 1.0f;
 
+        private ToolType previousTool; // Для отслеживания предыдущего инструмента
+
+        private bool showHandles = false; // Показывать усики для Безье
+
         public Form1()
         {
             InitializeComponent();
@@ -75,10 +79,10 @@ namespace DrawingEditor
             toolStrip.Dock = DockStyle.Top;
 
             // Кнопки для выбора фигур
-            var lineButton = new ToolStripButton("Line", null, (s, e) => currentTool = ToolType.Line);
-            var rectangleButton = new ToolStripButton("Rectangle", null, (s, e) => currentTool = ToolType.Rectangle);
-            var ellipseButton = new ToolStripButton("Ellipse", null, (s, e) => currentTool = ToolType.Ellipse);
-            var bezierButton = new ToolStripButton("Bezier", null, (s, e) => currentTool = ToolType.BezierCurve);
+            var lineButton = new ToolStripButton("Line", null, (s, e) => SwitchTool(ToolType.Line));
+            var rectangleButton = new ToolStripButton("Rectangle", null, (s, e) => SwitchTool(ToolType.Rectangle));
+            var ellipseButton = new ToolStripButton("Ellipse", null, (s, e) => SwitchTool(ToolType.Ellipse));
+            var bezierButton = new ToolStripButton("Bezier", null, (s, e) => SwitchTool(ToolType.BezierCurve));
 
             // Разделитель
             var separator1 = new ToolStripSeparator();
@@ -104,7 +108,7 @@ namespace DrawingEditor
             };
 
             // Добавляем элементы для многоугольника
-            var polygonButton = new ToolStripButton("Polygon", null, (s, e) => currentTool = ToolType.Polygon);
+            var polygonButton = new ToolStripButton("Polygon", null, (s, e) => SwitchTool(ToolType.Polygon));
             var sidesLabel = new ToolStripLabel("Sides:");
             var sidesNumeric = new ToolStripComboBox();
             sidesNumeric.Name = "sidesNumeric";
@@ -112,7 +116,7 @@ namespace DrawingEditor
             sidesNumeric.SelectedIndex = 0;
 
             // Добавляем кнопку для ломаной
-            var polylineButton = new ToolStripButton("Polyline", null, (s, e) => currentTool = ToolType.Polyline);
+            var polylineButton = new ToolStripButton("Polyline", null, (s, e) => SwitchTool(ToolType.Polyline));
 
             // Добавляем разделитель и кнопки режимов
             var separator3 = new ToolStripSeparator();
@@ -229,6 +233,27 @@ namespace DrawingEditor
             if (currentShape != null)
             {
                 currentShape.Draw(e.Graphics);
+                
+                // Для Безье в процессе рисования показываем все точки как маркеры
+                // в соответствии с учебным примером
+                if (currentTool == ToolType.BezierCurve && isBezierDrawing && currentShape is BezierCurve)
+                {
+                    var pts = currentShape.Points;
+                    if (pts.Count >= 3)
+                    {
+                        // Рисуем все точки как маркеры
+                        using (Brush brush = new SolidBrush(Color.Black))
+                        {
+                            const int markerSize = 5;
+                            foreach (var pt in pts)
+                            {
+                                e.Graphics.FillEllipse(brush, 
+                                    pt.X - markerSize, pt.Y - markerSize, 
+                                    markerSize * 2, markerSize * 2);
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -278,47 +303,53 @@ namespace DrawingEditor
                 switch (currentMode)
                 {
                     case EditMode.Draw:
-                        if (currentTool == ToolType.Polyline)
+                        if (currentTool == ToolType.BezierCurve)
+                        {
+                            if (currentShape == null)
+                            {
+                                isBezierDrawing = true;
+                                CreateShape();
+                                currentShape.IsDrawing = true;
+                                currentShape.AddPoint(Point.Empty);
+                            }
+                            
+                            // Добавляем 3 точки в одну позицию при каждом клике
+                            currentShape.AddPoint(e.Location);
+                            currentShape.AddPoint(e.Location);
+                            currentShape.AddPoint(e.Location);
+                            Refresh();
+                        }
+                        else if (currentTool == ToolType.Polyline)
                         {
                             if (currentShape == null || !(currentShape is Polyline) || !((Polyline)currentShape).IsDrawingPolyline)
                             {
-                                // Начинаем новую ломаную
-                                CreateShape(); // currentTool здесь будет Polyline
+                                CreateShape();
                                 isDrawing = true;
                                 currentShape.IsDrawing = true;
                                 ((Polyline)currentShape).IsDrawingPolyline = true;
-                                currentShape.AddPoint(e.Location); // Первая точка
+                                currentShape.AddPoint(e.Location);
                             }
                             else
                             {
-                                // Продолжаем рисовать существующую ломаную
-                                currentShape.AddPoint(e.Location); // Добавляем новую точку
+                                currentShape.AddPoint(e.Location);
                             }
                         }
                         else
                         {
-                            // Для всех остальных фигур - стандартное поведение
-                            isDrawing = true; 
+                            isDrawing = true;
                             CreateShape();
-                            currentShape.IsDrawing = true; 
-
-                            if (currentTool == ToolType.BezierCurve)
+                            currentShape.IsDrawing = true;
+                            if (currentTool == ToolType.Polygon)
                             {
-                                // ... (логика для BezierCurve, если она отличается)
-                            }
-                            else if (currentTool == ToolType.Polygon)
-                            {
-                                currentShape.AddPoint(e.Location); // Первая точка - центр для полигона
+                                currentShape.AddPoint(e.Location);
                             }
                             else
                             {
-                                // Line, RectangleShape, Ellipse
                                 startPoint = e.Location;
                                 currentShape.AddPoint(startPoint);
-                                currentShape.AddPoint(startPoint); 
+                                currentShape.AddPoint(startPoint);
                             }
                         }
-                        Refresh();
                         break;
 
                     case EditMode.Select:
@@ -346,7 +377,17 @@ namespace DrawingEditor
             }
             else if (e.Button == MouseButtons.Right)
             {
-                if (currentTool == ToolType.Polyline && currentShape is Polyline polyline && polyline.IsDrawingPolyline)
+                if (currentTool == ToolType.BezierCurve && isBezierDrawing && currentShape is BezierCurve)
+                {
+                    // Завершаем кривую Безье
+                    currentShape.IsDrawing = false;
+                    if (currentShape.Points.Count >= 3)
+                        shapes.Add(currentShape);
+                    currentShape = null;
+                    isBezierDrawing = false;
+                    Refresh();
+                }
+                else if (currentTool == ToolType.Polyline && currentShape is Polyline polyline && polyline.IsDrawingPolyline)
                 {
                     polyline.IsDrawingPolyline = false; // Завершаем рисование ломаной
                     if (currentShape.Points.Count >= 2) 
@@ -370,21 +411,41 @@ namespace DrawingEditor
                     isDrawing = false;
                     Refresh();
                 }
-                else if (currentTool == ToolType.BezierCurve && isBezierDrawing)
-                {
-                    // Завершаем рисование кривой Безье
-                    currentShape.IsDrawing = false;
-                    shapes.Add(currentShape);
-                    currentShape = null;
-                    isBezierDrawing = false;
-                    Refresh();
-                }
             }
         }
 
         private void Form1_MouseMove(object sender, MouseEventArgs e)
         {
-            if (isDrawing && currentShape != null && currentMode == EditMode.Draw)
+            if (currentTool == ToolType.BezierCurve && isBezierDrawing && currentShape is BezierCurve && e.Button == MouseButtons.Left)
+            {
+                // Реализуем логику из учебного примера с учетом правильных ролей точек
+                if (currentShape.Points.Count >= 4)  // Включая пустую начальную точку
+                {
+                    int n = currentShape.Points.Count;
+                    
+                    // Важное изменение: в соответствии с учебным примером,
+                    // последняя точка (следующая за мышью) - это вторая контрольная точка (P2),
+                    // а не вторая опорная точка (P3)!
+                    
+                    // Обновляем вторую контрольную точку (P2)
+                    currentShape.UpdatePoint(n - 1, e.Location);
+                    
+                    // Симметрично обновляем первую контрольную точку (P1)
+                    // относительно второй опорной точки (P0)
+                    Point p0 = currentShape.Points[n - 3]; // Первая опорная точка текущего сегмента
+                    Point p2 = e.Location; // Вторая контрольная точка (только что обновленная)
+                    
+                    // Вычисляем симметричную позицию для первой контрольной точки
+                    Point p1 = new Point(
+                        p0.X - (p2.X - p0.X),
+                        p0.Y - (p2.Y - p0.Y)
+                    );
+                    currentShape.UpdatePoint(n - 2, p1);
+                    
+                    Refresh();
+                }
+            }
+            else if (isDrawing && currentShape != null && currentMode == EditMode.Draw)
             {
                 if (currentTool == ToolType.Polygon)
                 {
@@ -457,7 +518,15 @@ namespace DrawingEditor
 
         private void Form1_MouseUp(object sender, MouseEventArgs e)
         {
-            if (isDrawing && currentShape != null && currentMode == EditMode.Draw)
+            if (currentTool == ToolType.BezierCurve && isBezierDrawing && e.Button == MouseButtons.Left)
+            {
+                // В учебном примере MouseUp не используется специально
+                // Мы просто оставляем точки в их текущем положении
+                // и не делаем ничего особенного, так как последующий MouseDown
+                // добавит новые три точки для следующего сегмента
+                Refresh();
+            }
+            else if (isDrawing && currentShape != null && currentMode == EditMode.Draw)
             {
                 currentShape.IsDrawing = false; // Завершаем флаг рисования для фигуры
 
@@ -533,6 +602,70 @@ namespace DrawingEditor
             int maxX2 = shape.Points.Max(p => p.X);
             int maxY2 = shape.Points.Max(p => p.Y);
             return System.Drawing.Rectangle.FromLTRB(minX2 - 5, minY2 - 5, maxX2 + 5, maxY2 + 5);
+        }
+
+        private void HandleUnfinishedDrawing(ToolType newTool)
+        {
+            // Если инструмент не изменился, или если мы не были в режиме рисования, ничего не делаем
+            if (previousTool == newTool && currentMode == EditMode.Draw) return;
+            if (currentMode != EditMode.Draw && currentShape == null) return; // Если не рисовали, и нет незавершенной фигуры
+
+            if (isDrawing || isBezierDrawing || (currentShape is Polyline polyline && polyline.IsDrawingPolyline) )
+            {
+                if (currentShape != null)
+                {
+                    currentShape.IsDrawing = false; // Завершаем флаг рисования для фигуры
+                    if (previousTool == ToolType.Polygon && currentShape is Polygon polygon)
+                    {
+                        polygon.FinalizeShape();
+                        if (polygon.Points.Count == polygon.SidesCount && !polygon.Points.Any(p => p.IsEmpty))
+                        {
+                            shapes.Add(currentShape);
+                        }
+                    }
+                    else if (previousTool == ToolType.Polyline && currentShape is Polyline pLine && pLine.IsDrawingPolyline)
+                    {
+                        pLine.IsDrawingPolyline = false;
+                        if (pLine.Points.Count >= 2) // Сохраняем, если есть хотя бы линия
+                        {
+                            shapes.Add(currentShape);
+                        }
+                    }
+                    else if (previousTool == ToolType.BezierCurve && currentShape is BezierCurve bezier)
+                    {
+                        // Для Безье, если есть хотя бы один сегмент (4 точки + начальная)
+                        if (bezier.Points.Count >= 5) 
+                        {
+                            shapes.Add(currentShape);
+                        }
+                        isBezierDrawing = false; // Сброс специфичного флага
+                    }
+                    else if (previousTool == ToolType.Line || previousTool == ToolType.Rectangle || previousTool == ToolType.Ellipse)
+                    {
+                        // Для простых фигур, если есть 2 точки (начальная и конечная)
+                        if (currentShape.Points.Count >= 2 && !(currentShape.Points[0] == currentShape.Points[1]))
+                        {
+                            shapes.Add(currentShape);
+                        }
+                    }
+                }
+            }
+            // Сброс общих состояний
+            currentShape = null;
+            isDrawing = false;
+            isBezierDrawing = false; // На всякий случай, хотя должно быть уже сброшено выше
+            // Для Polyline IsDrawingPolyline сбросится, когда currentShape станет null или будет пересоздан
+        }
+
+        private void SwitchTool(ToolType newTool)
+        {
+            HandleUnfinishedDrawing(newTool);
+            
+            previousTool = currentTool; // Обновляем previousTool перед сменой currentTool
+            currentTool = newTool;
+            currentMode = EditMode.Draw; 
+            selectedShape = null;
+            Refresh();
         }
     }
 }
